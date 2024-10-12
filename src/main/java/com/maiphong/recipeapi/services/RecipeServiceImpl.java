@@ -326,7 +326,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public boolean addIngredient(UUID id, UUID ingredientId, RecipeAddIngredientDTO recipeAddIngredientDTO) {
+    public boolean addIngredient(UUID id, RecipeAddIngredientDTO recipeAddIngredientDTO) {
         // Check if recipe is existed
         var recipe = recipeRepository.findById(id).orElse(null);
 
@@ -334,8 +334,7 @@ public class RecipeServiceImpl implements RecipeService {
             throw new IllegalArgumentException("Recipe not found");
         }
 
-        // Check ingredientId is existed
-        var ingredient = ingredientRepository.findById(ingredientId).orElse(null);
+        var ingredient = ingredientRepository.findById(recipeAddIngredientDTO.getIngredientId()).orElse(null);
 
         if (ingredient == null) {
             throw new IllegalArgumentException("Ingredient not found");
@@ -346,7 +345,7 @@ public class RecipeServiceImpl implements RecipeService {
             throw new IllegalArgumentException("Amount is required");
         }
 
-        var recipeIngredientId = new RecipeIngredientId(recipe.getId(), ingredient.getId());
+        var recipeIngredientId = new RecipeIngredientId(recipe.getId(), recipeAddIngredientDTO.getIngredientId());
 
         // Create RecipeIngredient entity
         var recipeIngredient = new RecipeIngredient();

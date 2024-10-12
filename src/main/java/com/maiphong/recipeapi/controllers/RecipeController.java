@@ -151,7 +151,6 @@ public class RecipeController {
     @ApiResponse(responseCode = "404", description = "Recipe or ingredient not found")
     public ResponseEntity<?> addIngredient(
             @PathVariable UUID id,
-            @PathVariable UUID ingredientId,
             @Valid @RequestBody RecipeAddIngredientDTO recipeAddIngredientDTO,
             BindingResult bindingResult) {
 
@@ -160,7 +159,7 @@ public class RecipeController {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
 
-        var result = recipeService.addIngredient(id, ingredientId, recipeAddIngredientDTO);
+        var result = recipeService.addIngredient(id, recipeAddIngredientDTO);
 
         return ResponseEntity.ok(result);
     }
