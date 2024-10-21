@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import com.maiphong.recipeapi.dtos.ingredient.IngredientSearchDTO;
 import com.maiphong.recipeapi.dtos.ingredient.IngredientCreateBatchDTO;
 import com.maiphong.recipeapi.dtos.ingredient.IngredientCreateDTO;
 import com.maiphong.recipeapi.dtos.ingredient.IngredientDTO;
+import com.maiphong.recipeapi.dtos.searchdto.SortDirection;
 import com.maiphong.recipeapi.services.IngredientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,6 +54,31 @@ public class IngredientController {
 
         // Search ingredient by keyword and paging
         var ingredients = ingredientService.search(keyword, pageable);
+
+        // Convert to PagedModel - Enhance data with HATEOAS - Easy to navigate with
+        // links
+        var pagedModel = pagedResourcesAssembler.toModel(ingredients);
+
+        return ResponseEntity.ok(pagedModel);
+    }
+
+    @PostMapping("/search")
+    @Operation(summary = "Get all ingredients or search ingredients by keyword")
+    @ApiResponse(responseCode = "200", description = "Return all ingredients or search ingredients by keyword")
+    public ResponseEntity<?> search(@RequestBody IngredientSearchDTO ingredientSearchDTO) {
+        // Check sort order
+        Pageable pageable = null;
+
+        if (ingredientSearchDTO.getOrder().equals(SortDirection.ASC)) {
+            pageable = PageRequest.of(ingredientSearchDTO.getPage(), ingredientSearchDTO.getSize(),
+                    Sort.by(ingredientSearchDTO.getSortBy()).ascending());
+        } else {
+            pageable = PageRequest.of(ingredientSearchDTO.getPage(), ingredientSearchDTO.getSize(),
+                    Sort.by(ingredientSearchDTO.getSortBy()).descending());
+        }
+
+        // Search ingredient by keyword and paging
+        var ingredients = ingredientService.search(ingredientSearchDTO.getKeyword(), pageable);
 
         // Convert to PagedModel - Enhance data with HATEOAS - Easy to navigate with
         // links

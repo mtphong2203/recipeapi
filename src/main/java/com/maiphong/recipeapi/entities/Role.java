@@ -19,6 +19,9 @@ public class Role {
     @Column(name = "name", unique = true, nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
-    @OneToMany(mappedBy = "role")
-    private Set<UserRole> users;
+    @Column(name = "description", columnDefinition = "NVARCHAR(500)")
+    private String description;
+
+    @ManyToMany
+    private Set<User> users;
 }

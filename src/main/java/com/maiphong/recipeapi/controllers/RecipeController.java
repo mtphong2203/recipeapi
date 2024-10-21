@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.maiphong.recipeapi.dtos.recipe.RecipeAddIngredientDTO;
+import com.maiphong.recipeapi.dtos.recipe.RecipeAddListIngredientDTO;
 import com.maiphong.recipeapi.dtos.recipe.RecipeCreateDTO;
 import com.maiphong.recipeapi.dtos.recipe.RecipeDTO;
+import com.maiphong.recipeapi.dtos.recipe.RecipeEditDTO;
+import com.maiphong.recipeapi.dtos.recipe.RecipeSearchDTO;
+import com.maiphong.recipeapi.dtos.searchdto.SortDirection;
 import com.maiphong.recipeapi.services.RecipeService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -67,6 +70,31 @@ public class RecipeController {
         return ResponseEntity.ok(pagedModel);
     }
 
+    @PostMapping("/search")
+    @Operation(summary = "Get all recipes or search recipes by keyword")
+    @ApiResponse(responseCode = "200", description = "Return all recipes or search recipes by keyword")
+    public ResponseEntity<?> search(@RequestBody RecipeSearchDTO recipeSearchDTO) {
+        // Check sort order
+        Pageable pageable = null;
+
+        if (recipeSearchDTO.getOrder().equals(SortDirection.ASC)) {
+            pageable = PageRequest.of(recipeSearchDTO.getPage(), recipeSearchDTO.getSize(),
+                    Sort.by(recipeSearchDTO.getSortBy()).ascending());
+        } else {
+            pageable = PageRequest.of(recipeSearchDTO.getPage(), recipeSearchDTO.getSize(),
+                    Sort.by(recipeSearchDTO.getSortBy()).descending());
+        }
+
+        // Search ingredient by keyword and paging
+        var recipes = recipeService.search(recipeSearchDTO.getKeyword(), recipeSearchDTO.getCategoryName(), pageable);
+
+        // Convert to PagedModel - Enhance data with HATEOAS - Easy to navigate with
+        // links
+        var pagedModel = pagedResourcesAssembler.toModel(recipes);
+
+        return ResponseEntity.ok(pagedModel);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get recipe by id")
     @ApiResponse(responseCode = "200", description = "Return recipe by id")
@@ -107,7 +135,7 @@ public class RecipeController {
     @ApiResponse(responseCode = "400", description = "Bad Request")
     public ResponseEntity<?> edit(
             @PathVariable UUID id,
-            @Valid @RequestBody RecipeDTO recipeDTO,
+            @Valid @RequestBody RecipeEditDTO recipeDTO,
             BindingResult bindingResult) {
         // Validate recipeDTO
         if (bindingResult.hasErrors()) {
@@ -145,7 +173,7 @@ public class RecipeController {
 
     // Add ingredient to recipe - PostMapping -
     // /api/v1/recipes/{id}/ingredients/{ingredientId}
-    @PostMapping("/{id}/ingredients/{ingredientId}")
+    @PostMapping("/{id}/ingredients")
     @Operation(summary = "Add ingredient to recipe by id")
     @ApiResponse(responseCode = "200", description = "Add ingredient to recipe by id")
     @ApiResponse(responseCode = "404", description = "Recipe or ingredient not found")
@@ -160,6 +188,27 @@ public class RecipeController {
         }
 
         var result = recipeService.addIngredient(id, recipeAddIngredientDTO);
+
+        return ResponseEntity.ok(result);
+    }
+
+    // Add ingredient to recipe - PostMapping -
+    // /api/v1/recipes/{id}/ingredients/{ingredientId}
+    @PostMapping("/{id}/list-ingredients")
+    @Operation(summary = "Add ingredient to recipe by id")
+    @ApiResponse(responseCode = "200", description = "Add ingredient to recipe by id")
+    @ApiResponse(responseCode = "404", description = "Recipe or ingredient not found")
+    public ResponseEntity<?> addListIngredient(
+            @PathVariable UUID id,
+            @Valid @RequestBody RecipeAddListIngredientDTO recipeAddListIngredientDTO,
+            BindingResult bindingResult) {
+
+        // Validate recipeAddIngredientDTO
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
+
+        var result = recipeService.addListIngredient(id, recipeAddListIngredientDTO);
 
         return ResponseEntity.ok(result);
     }

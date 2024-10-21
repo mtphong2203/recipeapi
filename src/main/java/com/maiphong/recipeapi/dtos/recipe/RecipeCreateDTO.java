@@ -9,7 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecipeCreateDTO {
@@ -34,5 +35,7 @@ public class RecipeCreateDTO {
     private int serving;
 
     private UUID categoryId;
+
+    private List<RecipeAddIngredientDTO> ingredients;
 
 }
