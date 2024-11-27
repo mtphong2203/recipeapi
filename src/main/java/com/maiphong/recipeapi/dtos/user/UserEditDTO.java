@@ -1,7 +1,7 @@
 package com.maiphong.recipeapi.dtos.user;
 
 import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.UUID;
+import java.util.*;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -12,6 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 public class UserEditDTO {
     private UUID id;
+
     @NotNull(message = "First name is required")
     @NotBlank(message = "First name is not empty")
     @Length(min = 3, max = 255, message = "First name must be between 3 and 255 characters")

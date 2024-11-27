@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.maiphong.recipeapi.dtos.category.CategoryCreateDTO;
 import com.maiphong.recipeapi.dtos.category.CategoryDTO;
 import com.maiphong.recipeapi.entities.Category;
+import com.maiphong.recipeapi.map.category.CategoryMapper;
 import com.maiphong.recipeapi.repositories.CategoryRepository;
 
 import jakarta.persistence.criteria.Predicate;
@@ -20,9 +21,11 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
         this.categoryRepository = categoryRepository;
+        this.categoryMapper = categoryMapper;
     }
 
     @Override
@@ -30,10 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
         var categories = categoryRepository.findAll();
 
         var categoriesDTOs = categories.stream().map(c -> {
-            var categoryDTO = new CategoryDTO();
-            categoryDTO.setId(c.getId());
-            categoryDTO.setName(c.getName());
-            categoryDTO.setDescription(c.getDescription());
+            var categoryDTO = categoryMapper.toCategoryDTO(c);
             return categoryDTO;
         }).toList();
 
@@ -48,10 +48,7 @@ public class CategoryServiceImpl implements CategoryService {
             return null;
         }
 
-        var categoryDTO = new CategoryDTO();
-        categoryDTO.setId(category.getId());
-        categoryDTO.setName(category.getName());
-        categoryDTO.setDescription(category.getDescription());
+        var categoryDTO = categoryMapper.toCategoryDTO(category);
 
         return categoryDTO;
     }
@@ -67,16 +64,11 @@ public class CategoryServiceImpl implements CategoryService {
             throw new IllegalArgumentException("CategoryDTO is exist!");
         }
 
-        var category = new Category();
-        category.setName(categoryCreateDTO.getName());
-        category.setDescription(categoryCreateDTO.getDescription());
+        var category = categoryMapper.toCategory(categoryCreateDTO);
 
         categoryRepository.save(category);
 
-        var updateCategoryDTO = new CategoryDTO();
-        updateCategoryDTO.setId(category.getId());
-        updateCategoryDTO.setName(category.getName());
-        updateCategoryDTO.setDescription(category.getDescription());
+        var updateCategoryDTO = categoryMapper.toCategoryDTO(category);
 
         return updateCategoryDTO;
     }
@@ -101,17 +93,13 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         // Update category
-        category.setName(categoryDTO.getName());
-        category.setDescription(categoryDTO.getDescription());
+        category = categoryMapper.toCategory(categoryDTO);
 
         // Save category => update
         category = categoryRepository.save(category);
 
         // Convert Category to CategoryDTO
-        var updatedCategoryDTO = new CategoryDTO();
-        updatedCategoryDTO.setId(category.getId());
-        updatedCategoryDTO.setName(category.getName());
-        updatedCategoryDTO.setDescription(category.getDescription());
+        var updatedCategoryDTO = categoryMapper.toCategoryDTO(category);
 
         return updatedCategoryDTO;
     }
@@ -154,10 +142,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // Covert List<Category> to List<CategoryDTO>
         var categoryDTOs = categories.stream().map(category -> {
-            var categoryDTO = new CategoryDTO();
-            categoryDTO.setId(category.getId());
-            categoryDTO.setName(category.getName());
-            categoryDTO.setDescription(category.getDescription());
+            var categoryDTO = categoryMapper.toCategoryDTO(category);
             return categoryDTO;
         }).toList();
 
@@ -182,10 +167,7 @@ public class CategoryServiceImpl implements CategoryService {
         Page<Category> categories = categoryRepository.findAll(specification, pageable);
 
         Page<CategoryDTO> categoryDTOs = categories.map(category -> {
-            var categoryDTO = new CategoryDTO();
-            categoryDTO.setId(category.getId());
-            categoryDTO.setName(category.getName());
-            categoryDTO.setDescription(category.getDescription());
+            var categoryDTO = categoryMapper.toCategoryDTO(category);
             return categoryDTO;
         });
 

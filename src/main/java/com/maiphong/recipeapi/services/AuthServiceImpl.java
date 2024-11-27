@@ -35,17 +35,13 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
             throw new UsernameNotFoundException("User not found");
         }
 
-        Set<GrantedAuthority> authorities = Set.of();
-        // Check if user has roles and map them to authorities
-        if (user.getRoles() != null) {
-            authorities = user.getRoles().stream()
-                    .map(role -> "ROLE_" + role.getName())
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toSet());
-        }
-        // Return a UserDetails object with username, password and authorities (empty if
-        // no roles)
+        // Get the user's roles
+        Set<GrantedAuthority> grantedAuthorities = user.getRoles().stream()
+                .map(auth -> "ROLE_" + auth.getName()) // Add the ROLE_ADMIN or ROLE_USER prefix
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
+
         return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getPassword(),
-                authorities);
+                grantedAuthorities);
     }
 }

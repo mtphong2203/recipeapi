@@ -6,6 +6,7 @@ import java.util.UUID;
 import jakarta.persistence.criteria.Predicate;
 
 import com.maiphong.recipeapi.entities.User;
+import com.maiphong.recipeapi.map.user.UserMapper;
 import com.maiphong.recipeapi.repositories.UserRepository;
 
 import org.springframework.data.domain.Page;
@@ -25,11 +26,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     // Inject UserRepository via constructor
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -37,12 +40,7 @@ public class UserServiceImpl implements UserService {
         var users = userRepository.findAll();
 
         var userDTOs = users.stream().map(user -> {
-            var userDTO = new UserDTO();
-            userDTO.setId(user.getId());
-            userDTO.setFirstName(user.getFirstName());
-            userDTO.setLastName(user.getLastName());
-            userDTO.setEmail(user.getEmail());
-            userDTO.setUsername(user.getUserName());
+            var userDTO = userMapper.toUserDTO(user);
             return userDTO;
         }).toList();
 
@@ -83,12 +81,7 @@ public class UserServiceImpl implements UserService {
 
         // Covert List<User> to List<UserDTO>
         var userDTOs = users.stream().map(user -> {
-            var userDTO = new UserDTO();
-            userDTO.setId(user.getId());
-            userDTO.setFirstName(user.getFirstName());
-            userDTO.setLastName(user.getLastName());
-            userDTO.setEmail(user.getEmail());
-            userDTO.setUsername(user.getUserName());
+            var userDTO = userMapper.toUserDTO(user);
             return userDTO;
         }).toList();
 
@@ -129,12 +122,7 @@ public class UserServiceImpl implements UserService {
 
         // Covert Page<User> to Page<UserDTO>
         var userDTOs = users.map(user -> {
-            var userDTO = new UserDTO();
-            userDTO.setId(user.getId());
-            userDTO.setFirstName(user.getFirstName());
-            userDTO.setLastName(user.getLastName());
-            userDTO.setEmail(user.getEmail());
-            userDTO.setUsername(user.getUserName());
+            var userDTO = userMapper.toUserDTO(user);
             return userDTO;
         });
 
@@ -149,55 +137,36 @@ public class UserServiceImpl implements UserService {
             return null;
         }
 
-        var userDTO = new UserDTO();
-        userDTO.setId(user.getId());
-        userDTO.setFirstName(user.getFirstName());
-        userDTO.setLastName(user.getLastName());
-        userDTO.setEmail(user.getEmail());
-        userDTO.setUsername(user.getUserName());
+        var userDTO = userMapper.toUserDTO(user);
 
         return userDTO;
     }
 
     @Override
-    public UserDTO create(UserCreateDTO userCreateDTO) {
+    public boolean create(UserCreateDTO userCreateDTO) {
         // Kiem tra userDTO null
         if (userCreateDTO == null) {
             throw new IllegalArgumentException("User is required");
         }
 
-        // Checl if user name or email is existed
+        // Check if user name or email is existed
         var existedUser = userRepository.findByUserNameOrEmail(userCreateDTO.getUsername(), userCreateDTO.getEmail());
         if (existedUser != null) {
             throw new IllegalArgumentException("User name or email is existed");
         }
 
         // Convert UserDTO to User
-        var user = new User();
-        user.setFirstName(userCreateDTO.getFirstName());
-        user.setLastName(userCreateDTO.getLastName());
-        user.setEmail(userCreateDTO.getEmail());
-        user.setUserName(userCreateDTO.getUsername());
-        user.setPassword(passwordEncoder.encode(userCreateDTO.getPassword())); // Hash password with BCrypt:
-                                                                               // Admin@1234(DTO) =>
-                                                                               // $2a$10$3Q7...(Database)
-
+        var user = userMapper.toUser(userCreateDTO);
+        // Hash password with BCrypt: Admin@1234(DTO) => $2a$10$3Q7...(Database
+        user.setPassword(passwordEncoder.encode(userCreateDTO.getPassword()));
         // Save user
         user = userRepository.save(user);
 
-        // Convert User to UserDTO
-        var newUserDTO = new UserDTO();
-        newUserDTO.setId(user.getId());
-        newUserDTO.setFirstName(user.getFirstName());
-        newUserDTO.setLastName(user.getLastName());
-        newUserDTO.setEmail(user.getEmail());
-        newUserDTO.setUsername(user.getUserName());
-
-        return newUserDTO;
+        return user != null;
     }
 
     @Override
-    public UserDTO update(UUID id, UserEditDTO userEditDTO) {
+    public boolean update(UUID id, UserEditDTO userEditDTO) {
         if (userEditDTO == null) {
             throw new IllegalArgumentException("User is required");
         }
@@ -217,26 +186,12 @@ public class UserServiceImpl implements UserService {
         }
 
         // Update user
-        user.setFirstName(userEditDTO.getFirstName());
-        user.setLastName(userEditDTO.getLastName());
-        user.setEmail(userEditDTO.getEmail());
-        user.setUserName(userEditDTO.getUsername());
-        user.setPassword(passwordEncoder.encode(userEditDTO.getPassword())); // Hash password with BCrypt:
-                                                                             // Admin@1234(DTO) =>
-                                                                             // $2a$10$3Q7...(Database)
-
+        userMapper.toUser(userEditDTO);
+        user.setPassword(passwordEncoder.encode(userEditDTO.getPassword()));
         // Save user => update
         user = userRepository.save(user);
 
-        // Convert User to UserDTO
-        var updatedUserDTO = new UserDTO();
-        updatedUserDTO.setId(user.getId());
-        updatedUserDTO.setFirstName(user.getFirstName());
-        updatedUserDTO.setLastName(user.getLastName());
-        updatedUserDTO.setEmail(user.getEmail());
-        updatedUserDTO.setUsername(user.getUserName());
-
-        return updatedUserDTO;
+        return user != null;
     }
 
     @Override

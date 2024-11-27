@@ -12,16 +12,19 @@ import com.maiphong.recipeapi.dtos.ingredient.IngredientCreateBatchDTO;
 import com.maiphong.recipeapi.dtos.ingredient.IngredientCreateDTO;
 import com.maiphong.recipeapi.dtos.ingredient.IngredientDTO;
 import com.maiphong.recipeapi.entities.Ingredient;
+import com.maiphong.recipeapi.map.ingredient.IngredientMapper;
 import com.maiphong.recipeapi.repositories.IngredientRepository;
 
 @Service
 @Transactional
 public class IngredientServiceImpl implements IngredientService {
     private final IngredientRepository ingredientRepository;
+    private final IngredientMapper ingredientMapper;
 
     // Inject IngredientRepository via constructor
-    public IngredientServiceImpl(IngredientRepository ingredientRepository) {
+    public IngredientServiceImpl(IngredientRepository ingredientRepository, IngredientMapper ingredientMapper) {
         this.ingredientRepository = ingredientRepository;
+        this.ingredientMapper = ingredientMapper;
     }
 
     @Override
@@ -29,9 +32,7 @@ public class IngredientServiceImpl implements IngredientService {
         var ingredients = ingredientRepository.findAll();
 
         var ingredientDTOs = ingredients.stream().map(ingredient -> {
-            var ingredientDTO = new IngredientDTO();
-            ingredientDTO.setId(ingredient.getId());
-            ingredientDTO.setName(ingredient.getName());
+            var ingredientDTO = ingredientMapper.toIngredientDTO(ingredient);
             return ingredientDTO;
         }).toList();
 
@@ -56,9 +57,7 @@ public class IngredientServiceImpl implements IngredientService {
 
         // Covert List<Ingredient> to List<IngredientDTO>
         var ingredientDTOs = ingredients.stream().map(ingredient -> {
-            var ingredientDTO = new IngredientDTO();
-            ingredientDTO.setId(ingredient.getId());
-            ingredientDTO.setName(ingredient.getName());
+            var ingredientDTO = ingredientMapper.toIngredientDTO(ingredient);
             return ingredientDTO;
         }).toList();
 
@@ -83,9 +82,7 @@ public class IngredientServiceImpl implements IngredientService {
 
         // Covert Page<Ingredient> to Page<IngredientDTO>
         var ingredientDTOs = ingredients.map(ingredient -> {
-            var ingredientDTO = new IngredientDTO();
-            ingredientDTO.setId(ingredient.getId());
-            ingredientDTO.setName(ingredient.getName());
+            var ingredientDTO = ingredientMapper.toIngredientDTO(ingredient);
             return ingredientDTO;
         });
 
@@ -100,10 +97,7 @@ public class IngredientServiceImpl implements IngredientService {
             return null;
         }
 
-        var ingredientDTO = new IngredientDTO();
-        ingredientDTO.setId(ingredient.getId());
-        ingredientDTO.setName(ingredient.getName());
-
+        var ingredientDTO = ingredientMapper.toIngredientDTO(ingredient);
         return ingredientDTO;
     }
 
@@ -121,16 +115,13 @@ public class IngredientServiceImpl implements IngredientService {
         }
 
         // Convert IngredientDTO to Ingredient
-        var ingredient = new Ingredient();
-        ingredient.setName(ingredientCreateDTO.getName());
+        var ingredient = ingredientMapper.toIngredient(ingredientCreateDTO);
 
         // Save ingredient
         ingredient = ingredientRepository.save(ingredient);
 
         // Convert Ingredient to IngredientDTO
-        var newIngredientDTO = new IngredientDTO();
-        newIngredientDTO.setId(ingredient.getId());
-        newIngredientDTO.setName(ingredient.getName());
+        var newIngredientDTO = ingredientMapper.toIngredientDTO(ingredient);
 
         return newIngredientDTO;
     }
@@ -161,9 +152,7 @@ public class IngredientServiceImpl implements IngredientService {
         ingredient = ingredientRepository.save(ingredient);
 
         // Convert Ingredient to IngredientDTO
-        var updatedIngredientDTO = new IngredientDTO();
-        updatedIngredientDTO.setId(ingredient.getId());
-        updatedIngredientDTO.setName(ingredient.getName());
+        var updatedIngredientDTO = ingredientMapper.toIngredientDTO(ingredient);
 
         return updatedIngredientDTO;
     }
@@ -208,9 +197,7 @@ public class IngredientServiceImpl implements IngredientService {
 
         // Convert List<Ingredient> to List<IngredientDTO>
         var ingredientDTOs = result.stream().map(ingredient -> {
-            var ingredientDTO = new IngredientDTO();
-            ingredientDTO.setId(ingredient.getId());
-            ingredientDTO.setName(ingredient.getName());
+            var ingredientDTO = ingredientMapper.toIngredientDTO(ingredient);
             return ingredientDTO;
         }).toList();
 

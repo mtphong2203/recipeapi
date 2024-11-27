@@ -16,10 +16,10 @@ import com.maiphong.recipeapi.dtos.recipe.RecipeDTO;
 import com.maiphong.recipeapi.dtos.recipe.RecipeEditDTO;
 import com.maiphong.recipeapi.dtos.recipe.RecipeIngredientDTO;
 import com.maiphong.recipeapi.dtos.recipe.RecipeIngredientListWithRecipeIdDTO;
-import com.maiphong.recipeapi.entities.Ingredient;
 import com.maiphong.recipeapi.entities.Recipe;
 import com.maiphong.recipeapi.entities.RecipeIngredient;
 import com.maiphong.recipeapi.entities.RecipeIngredientId;
+import com.maiphong.recipeapi.map.recipe.RecipeMapper;
 import com.maiphong.recipeapi.repositories.CategoryRepository;
 import com.maiphong.recipeapi.repositories.IngredientRepository;
 import com.maiphong.recipeapi.repositories.RecipeIngredientRepository;
@@ -35,14 +35,16 @@ public class RecipeServiceImpl implements RecipeService {
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeIngredientRepository recipeIngredientRepository;
+    private final RecipeMapper recipeMapper;
 
     public RecipeServiceImpl(RecipeRepository recipeRepository, CategoryRepository categoryRepository,
             RecipeIngredientRepository recipeIngredientRepository,
-            IngredientRepository ingredientRepository) {
+            IngredientRepository ingredientRepository, RecipeMapper recipeMapper) {
         this.recipeRepository = recipeRepository;
         this.categoryRepository = categoryRepository;
         this.ingredientRepository = ingredientRepository;
         this.recipeIngredientRepository = recipeIngredientRepository;
+        this.recipeMapper = recipeMapper;
     }
 
     @Override
@@ -50,25 +52,15 @@ public class RecipeServiceImpl implements RecipeService {
         var recipes = recipeRepository.findAll();
 
         var recipesDTOs = recipes.stream().map(recipe -> {
-            var recipeEditDTO = new RecipeDTO();
-            recipeEditDTO.setId(recipe.getId());
-            recipeEditDTO.setTitle(recipe.getTitle());
-            recipeEditDTO.setDescription(recipe.getDescription());
-            recipeEditDTO.setImage(recipe.getImage());
-            recipeEditDTO.setPreparationTime(recipe.getPreparationTime());
-            recipeEditDTO.setCookTime(recipe.getCookTime());
-            recipeEditDTO.setServing(recipe.getServing());
-
+            var recipeDTO = recipeMapper.toRecipeDTO(recipe);
             if (recipe.getCategory() != null) {
                 var categoryDTO = new CategoryDTO();
                 categoryDTO.setId(recipe.getCategory().getId());
                 categoryDTO.setName(recipe.getCategory().getName());
                 categoryDTO.setDescription(recipe.getCategory().getDescription());
-
-                recipeEditDTO.setCategoryDTO(categoryDTO);
+                recipeDTO.setCategoryDTO(categoryDTO);
             }
-
-            return recipeEditDTO;
+            return recipeDTO;
         }).toList();
 
         return recipesDTOs;
@@ -81,16 +73,7 @@ public class RecipeServiceImpl implements RecipeService {
         if (recipe == null) {
             return null;
         }
-
-        var recipeEditDTO = new RecipeDTO();
-        recipeEditDTO.setId(recipe.getId());
-        recipeEditDTO.setTitle(recipe.getTitle());
-        recipeEditDTO.setDescription(recipe.getDescription());
-        recipeEditDTO.setImage(recipe.getImage());
-        recipeEditDTO.setPreparationTime(recipe.getPreparationTime());
-        recipeEditDTO.setCookTime(recipe.getCookTime());
-        recipeEditDTO.setServing(recipe.getServing());
-
+        var recipeDTO = recipeMapper.toRecipeDTO(recipe);
         // Check if entity recipe has category
         if (recipe.getCategory() != null) {
             // Convert Category to CategoryDTO
@@ -99,8 +82,7 @@ public class RecipeServiceImpl implements RecipeService {
             categoryDTO.setName(recipe.getCategory().getName());
             categoryDTO.setDescription(recipe.getCategory().getDescription());
 
-            // Set categoryDTO to recipeEditDTO
-            recipeEditDTO.setCategoryDTO(categoryDTO);
+            recipeDTO.setCategoryDTO(categoryDTO);
         }
 
         // Check if entity recipe has ingredients
@@ -115,11 +97,11 @@ public class RecipeServiceImpl implements RecipeService {
             }).toList();
 
             // Set recipeIngredientDTOs to recipeEditDTO
-            recipeEditDTO.setIngredientDTOs(ingredientDTOs);
+            recipeDTO.setIngredientDTOs(ingredientDTOs);
 
         }
 
-        return recipeEditDTO;
+        return recipeDTO;
     }
 
     @Override
@@ -133,14 +115,7 @@ public class RecipeServiceImpl implements RecipeService {
             throw new IllegalArgumentException("RecipeDTO is exist!");
         }
 
-        var recipe = new Recipe();
-        recipe.setTitle(recipeCreateDTO.getTitle());
-        recipe.setDescription(recipeCreateDTO.getDescription());
-        recipe.setImage(recipeCreateDTO.getImage());
-        recipe.setPreparationTime(recipeCreateDTO.getPreparationTime());
-        recipe.setCookTime(recipeCreateDTO.getCookTime());
-        recipe.setServing(recipeCreateDTO.getServing());
-
+        var recipe = recipeMapper.toRecipe(recipeCreateDTO);
         // Check if recipeCreateDTO.getCategoryId() is not null
         if (recipeCreateDTO.getCategoryId() != null) {
             // Find category by id
@@ -182,20 +157,11 @@ public class RecipeServiceImpl implements RecipeService {
             var recipeSaved = recipeIngredientRepository.save(recipeIngredient);
 
             // Convert recipeSave to DTO to show view
-            var recipeIngredientDTO = new RecipeIngredientDTO();
-            recipeIngredientDTO.setIngredientId(recipeSaved.getIngredient().getId());
-            recipeIngredientDTO.setName(recipeSaved.getIngredient().getName());
+            var recipeIngredientDTO = recipeMapper.toRecipeIngredientDTO(recipeSaved);
             recipeIngredientDTO.setAmount(recipeAddIngredientDTO.getAmount());
         });
 
-        var updateRecipeDTO = new RecipeDTO();
-        updateRecipeDTO.setId(recipe.getId());
-        updateRecipeDTO.setTitle(recipe.getTitle());
-        updateRecipeDTO.setDescription(recipe.getDescription());
-        updateRecipeDTO.setImage(recipe.getImage());
-        updateRecipeDTO.setPreparationTime(recipe.getPreparationTime());
-        updateRecipeDTO.setCookTime(recipe.getCookTime());
-        updateRecipeDTO.setServing(recipe.getServing());
+        var updateRecipeDTO = recipeMapper.toRecipeDTO(recipe);
 
         if (recipe.getCategory() != null) {
             var categoryDTO = new CategoryDTO();
@@ -244,13 +210,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         // Update recipe
-        recipe.setId(recipeEditDTO.getId());
-        recipe.setTitle(recipeEditDTO.getTitle());
-        recipe.setDescription(recipeEditDTO.getDescription());
-        recipe.setImage(recipeEditDTO.getImage());
-        recipe.setPreparationTime(recipeEditDTO.getPreparationTime());
-        recipe.setCookTime(recipeEditDTO.getCookTime());
-        recipe.setServing(recipeEditDTO.getServing());
+        recipe = recipeMapper.toRecipe(recipeEditDTO);
 
         if (recipe.getCategory() != null) {
             var category = categoryRepository.findById(recipeEditDTO.getCategoryId()).orElse(null);
@@ -295,21 +255,13 @@ public class RecipeServiceImpl implements RecipeService {
             var recipeIngredientSaved = recipeIngredientRepository.save(recipeIngredient);
 
             // Convert recipeIngredientSaved to RecipeIngredientDTO
-            var recipeIngredientDTO = new RecipeIngredientDTO();
-            recipeIngredientDTO.setIngredientId(recipeIngredientSaved.getIngredient().getId());
-            recipeIngredientDTO.setName(recipeIngredientSaved.getIngredient().getName());
+            var recipeIngredientDTO = recipeMapper.toRecipeIngredientDTO(recipeIngredientSaved);
             recipeIngredientDTO.setAmount(recipeIngredientSaved.getAmount());
+
         });
 
         // Convert Recipe to RecipeDTO
-        var updatedRecipeDTO = new RecipeDTO();
-        updatedRecipeDTO.setId(recipe.getId());
-        updatedRecipeDTO.setTitle(recipe.getTitle());
-        updatedRecipeDTO.setDescription(recipe.getDescription());
-        updatedRecipeDTO.setImage(recipe.getImage());
-        updatedRecipeDTO.setPreparationTime(recipe.getPreparationTime());
-        updatedRecipeDTO.setCookTime(recipe.getCookTime());
-        updatedRecipeDTO.setServing(recipe.getServing());
+        var updatedRecipeDTO = recipeMapper.toRecipeDTO(recipe);
 
         if (recipe.getCategory() != null) {
             var categoryDTO = new CategoryDTO();
@@ -360,23 +312,16 @@ public class RecipeServiceImpl implements RecipeService {
 
         // Covert List<Recipe> to List<RecipeDTO>
         var recipeDTOs = recipes.stream().map(recipe -> {
-            var recipeEditDTO = new RecipeDTO();
-            recipeEditDTO.setId(recipe.getId());
-            recipeEditDTO.setTitle(recipe.getTitle());
-            recipeEditDTO.setDescription(recipe.getDescription());
-            recipeEditDTO.setImage(recipe.getImage());
-            recipeEditDTO.setPreparationTime(recipe.getPreparationTime());
-            recipeEditDTO.setCookTime(recipe.getCookTime());
-            recipeEditDTO.setServing(recipe.getServing());
+            var recipeDTO = recipeMapper.toRecipeDTO(recipe);
 
             if (recipe.getCategory() != null) {
                 var categoryDTO = new CategoryDTO();
                 categoryDTO.setId(recipe.getCategory().getId());
                 categoryDTO.setName(recipe.getCategory().getName());
                 categoryDTO.setDescription(recipe.getCategory().getDescription());
-                recipeEditDTO.setCategoryDTO(categoryDTO);
+                recipeDTO.setCategoryDTO(categoryDTO);
             }
-            return recipeEditDTO;
+            return recipeDTO;
         }).toList();
 
         return recipeDTOs;
@@ -400,22 +345,15 @@ public class RecipeServiceImpl implements RecipeService {
         Page<Recipe> recipes = recipeRepository.findAll(specification, pageable);
 
         Page<RecipeDTO> recipeDTOs = recipes.map(recipe -> {
-            var recipeEditDTO = new RecipeDTO();
-            recipeEditDTO.setId(recipe.getId());
-            recipeEditDTO.setTitle(recipe.getTitle());
-            recipeEditDTO.setDescription(recipe.getDescription());
-            recipeEditDTO.setImage(recipe.getImage());
-            recipeEditDTO.setPreparationTime(recipe.getPreparationTime());
-            recipeEditDTO.setCookTime(recipe.getCookTime());
-            recipeEditDTO.setServing(recipe.getServing());
+            var recipeDTO = recipeMapper.toRecipeDTO(recipe);
             if (recipe.getCategory() != null) {
                 var categoryDTO = new CategoryDTO();
                 categoryDTO.setId(recipe.getCategory().getId());
                 categoryDTO.setName(recipe.getCategory().getName());
                 categoryDTO.setDescription(recipe.getCategory().getDescription());
-                recipeEditDTO.setCategoryDTO(categoryDTO);
+                recipeDTO.setCategoryDTO(categoryDTO);
             }
-            return recipeEditDTO;
+            return recipeDTO;
         });
 
         return recipeDTOs;
@@ -454,22 +392,15 @@ public class RecipeServiceImpl implements RecipeService {
         Page<Recipe> recipes = recipeRepository.findAll(specification, pageable);
 
         Page<RecipeDTO> recipeDTOs = recipes.map(recipe -> {
-            var recipeEditDTO = new RecipeDTO();
-            recipeEditDTO.setId(recipe.getId());
-            recipeEditDTO.setTitle(recipe.getTitle());
-            recipeEditDTO.setDescription(recipe.getDescription());
-            recipeEditDTO.setImage(recipe.getImage());
-            recipeEditDTO.setPreparationTime(recipe.getPreparationTime());
-            recipeEditDTO.setCookTime(recipe.getCookTime());
-            recipeEditDTO.setServing(recipe.getServing());
+            var recipeDTO = recipeMapper.toRecipeDTO(recipe);
             if (recipe.getCategory() != null) {
                 var categoryDTO = new CategoryDTO();
                 categoryDTO.setId(recipe.getCategory().getId());
                 categoryDTO.setName(recipe.getCategory().getName());
                 categoryDTO.setDescription(recipe.getCategory().getDescription());
-                recipeEditDTO.setCategoryDTO(categoryDTO);
+                recipeDTO.setCategoryDTO(categoryDTO);
             }
-            return recipeEditDTO;
+            return recipeDTO;
         });
 
         return recipeDTOs;
@@ -551,9 +482,7 @@ public class RecipeServiceImpl implements RecipeService {
             var recipeSaved = recipeIngredientRepository.save(recipeIngredient);
 
             // Convert recipeSave to DTO to show view
-            var recipeIngredientDTO = new RecipeIngredientDTO();
-            recipeIngredientDTO.setIngredientId(recipeSaved.getIngredient().getId());
-            recipeIngredientDTO.setName(recipeSaved.getIngredient().getName());
+            var recipeIngredientDTO = recipeMapper.toRecipeIngredientDTO(recipeSaved);
             recipeIngredientDTO.setAmount(recipeAddIngredientDTO.getAmount());
 
             listRecipeIngredient.add(recipeIngredientDTO);

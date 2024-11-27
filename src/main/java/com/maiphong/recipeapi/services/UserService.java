@@ -18,9 +18,9 @@ public interface UserService {
 
     UserDTO findById(UUID id);
 
-    UserDTO create(UserCreateDTO userCreateDTO);
+    boolean create(UserCreateDTO userCreateDTO);
 
-    UserDTO update(UUID id, UserEditDTO userEditDTO);
+    boolean update(UUID id, UserEditDTO userEditDTO);
 
     boolean delete(UUID id);
 }

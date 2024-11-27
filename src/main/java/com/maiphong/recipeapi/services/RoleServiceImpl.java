@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.maiphong.recipeapi.dtos.role.RoleCreateDTO;
 import com.maiphong.recipeapi.dtos.role.RoleDTO;
 import com.maiphong.recipeapi.entities.Role;
+import com.maiphong.recipeapi.map.role.RoleMapper;
 import com.maiphong.recipeapi.repositories.RoleRepository;
 
 import jakarta.persistence.criteria.Predicate;
@@ -20,9 +21,11 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
+    private final RoleMapper roleMapper;
 
-    public RoleServiceImpl(RoleRepository roleRepository) {
+    public RoleServiceImpl(RoleRepository roleRepository, RoleMapper roleMapper) {
         this.roleRepository = roleRepository;
+        this.roleMapper = roleMapper;
     }
 
     @Override
@@ -30,10 +33,7 @@ public class RoleServiceImpl implements RoleService {
         var roles = roleRepository.findAll();
 
         var rolesDTOs = roles.stream().map(c -> {
-            var roleDTO = new RoleDTO();
-            roleDTO.setId(c.getId());
-            roleDTO.setName(c.getName());
-            roleDTO.setDescription(c.getDescription());
+            var roleDTO = roleMapper.toRoleDTO(c);
             return roleDTO;
         }).toList();
 
@@ -47,12 +47,7 @@ public class RoleServiceImpl implements RoleService {
         if (role == null) {
             return null;
         }
-
-        var roleDTO = new RoleDTO();
-        roleDTO.setId(role.getId());
-        roleDTO.setName(role.getName());
-        roleDTO.setDescription(role.getDescription());
-
+        var roleDTO = roleMapper.toRoleDTO(role);
         return roleDTO;
     }
 
@@ -67,17 +62,11 @@ public class RoleServiceImpl implements RoleService {
             throw new IllegalArgumentException("RoleDTO is exist!");
         }
 
-        var role = new Role();
-        role.setName(roleCreateDTO.getName());
-        role.setDescription(roleCreateDTO.getDescription());
+        var role = roleMapper.toRole(roleCreateDTO);
 
-        roleRepository.save(role);
+        role = roleRepository.save(role);
 
-        var updateRoleDTO = new RoleDTO();
-        updateRoleDTO.setId(role.getId());
-        updateRoleDTO.setName(role.getName());
-        updateRoleDTO.setDescription(role.getDescription());
-
+        var updateRoleDTO = roleMapper.toRoleDTO(role);
         return updateRoleDTO;
     }
 
@@ -101,18 +90,13 @@ public class RoleServiceImpl implements RoleService {
         }
 
         // Update role
-        role.setName(roleDTO.getName());
-        role.setDescription(roleDTO.getDescription());
+        roleMapper.toRole(roleDTO);
 
         // Save role => update
         role = roleRepository.save(role);
 
         // Convert Role to RoleDTO
-        var updatedRoleDTO = new RoleDTO();
-        updatedRoleDTO.setId(role.getId());
-        updatedRoleDTO.setName(role.getName());
-        updatedRoleDTO.setDescription(role.getDescription());
-
+        var updatedRoleDTO = roleMapper.toRoleDTO(role);
         return updatedRoleDTO;
     }
 
@@ -154,10 +138,7 @@ public class RoleServiceImpl implements RoleService {
 
         // Covert List<Role> to List<RoleDTO>
         var roleDTOs = roles.stream().map(role -> {
-            var roleDTO = new RoleDTO();
-            roleDTO.setId(role.getId());
-            roleDTO.setName(role.getName());
-            roleDTO.setDescription(role.getDescription());
+            var roleDTO = roleMapper.toRoleDTO(role);
             return roleDTO;
         }).toList();
 
@@ -182,10 +163,7 @@ public class RoleServiceImpl implements RoleService {
         Page<Role> roles = roleRepository.findAll(specification, pageable);
 
         Page<RoleDTO> roleDTOs = roles.map(role -> {
-            var roleDTO = new RoleDTO();
-            roleDTO.setId(role.getId());
-            roleDTO.setName(role.getName());
-            roleDTO.setDescription(role.getDescription());
+            var roleDTO = roleMapper.toRoleDTO(role);
             return roleDTO;
         });
 

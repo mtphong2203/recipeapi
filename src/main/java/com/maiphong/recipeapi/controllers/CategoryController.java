@@ -69,8 +69,9 @@ public class CategoryController {
     }
 
     @PostMapping("/search")
-    @Operation(summary = "Get all categories or search categories by keyword")
-    @ApiResponse(responseCode = "200", description = "Return all categories or search categories by keyword")
+    // @Operation(summary = "Get all categories or search categories by keyword")
+    // @ApiResponse(responseCode = "200", description = "Return all categories or
+    // search categories by keyword")
     public ResponseEntity<?> search(@RequestBody CategorySearchDTO categorySearchDTO) {
         // Check sort order
         Pageable pageable = null;
@@ -94,9 +95,9 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get category by id")
-    @ApiResponse(responseCode = "200", description = "Return category by id")
-    @ApiResponse(responseCode = "404", description = "Category not found")
+    // @Operation(summary = "Get category by id")
+    // @ApiResponse(responseCode = "200", description = "Return category by id")
+    // @ApiResponse(responseCode = "404", description = "Category not found")
     public ResponseEntity<?> findById(@PathVariable UUID id) {
         var category = categoryService.findById(id);
 
@@ -157,12 +158,6 @@ public class CategoryController {
     @ApiResponse(responseCode = "200", description = "Delete category by id")
     @ApiResponse(responseCode = "404", description = "Category not found")
     public ResponseEntity<?> deleteById(@PathVariable UUID id) {
-        var existedCategory = categoryService.findById(id);
-        // Check if category is null => return 404 Not Found
-        if (existedCategory == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         // Check if category is not null => delete category
         var isDeleted = categoryService.delete(id);
 

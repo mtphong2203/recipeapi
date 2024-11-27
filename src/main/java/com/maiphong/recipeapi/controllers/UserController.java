@@ -120,7 +120,7 @@ public class UserController {
         var newUser = userService.create(userDTO);
 
         // Check if newUser is null => return 400 Bad Request
-        if (newUser == null) {
+        if (!newUser) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -144,7 +144,7 @@ public class UserController {
         var updatedUserDTO = userService.update(id, userEditDTO);
 
         // Check if updatedUser is null => return 400 Bad Request
-        if (updatedUserDTO == null) {
+        if (!updatedUserDTO) {
             return ResponseEntity.badRequest().build();
         }
 

@@ -44,6 +44,7 @@ public class AuthController {
         // Call the authenticate method of the AuthenticationManagerBuilder instance
         // to authenticate the user
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String accessToken = tokenService.generateAccessToken(authentication);
@@ -65,7 +66,7 @@ public class AuthController {
 
         var result = userService.create(userCreateDTO);
 
-        return ResponseEntity.ok(result != null);
+        return ResponseEntity.ok(result);
     }
 
 }
